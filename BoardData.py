@@ -22,13 +22,6 @@ class BoardData:
         print(self.board)
         return self.board
 
-    def putChess(self, row, column, chessType=Chess.White):
-        if self.board[row, column] == 0:
-            self.board[row, column] = chessType
-            if self.checkWin(row, column):
-                return True
-        else:
-            return False
 
     def putChess(self, row, column):
         if self.board[row, column] == 0:

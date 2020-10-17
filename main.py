@@ -1,79 +1,121 @@
-#code:utf-8
-#author:zkl
+# code:utf-8
+# author:zkl
 import pygame
+from BoardData import *
 from pygame.locals import *
 from enum import Enum
-#颜色RGB
+
+
+# 颜色RGB
 class Color(Enum):
-    WHIHT = (255,255,255)
-    BLACK = (0,0,0)
-    RED = (255,0,0)
-#棋子类
+    WHITE = 0
+    BLACK = 1
+    RED = (255, 0, 0)
+
+
+# 棋子类
 class chess():
-    #初始化
-    def __init__(self):
-        pass
-    #接受位置和颜色
-    def set_pos(self,pos):
-        self.pos = pos
-    def get_pos(self,pos):
-        return self.pos
-    # 传出位置和颜色
-    def set_color(self,color):
-        self.color = color
-    def get_color(self,color):
-        return self.color
-#棋盘类
-class Chessboard():
-    #行数和列数SIZE
-    SIZE = 1
-    #单元格大小UNIT
-    UNIT = 1
-    #初始化棋盘
-    def __init__(self,size,unit):
-        self.SIZE = size
-        self.UNIT = unit
+    # 初始化
+    def __init__(self, screen, color, row, column):
+        self.screen = screen
+        self.image = pygame.image.load("Images/chess"+str(color.value)+".png")
+        self.image = pygame.transform.scale(self.image, (Chessboard.UNIT * 2, Chessboard.UNIT * 2))
+        self.pos = Chessboard.convertArrayToPos(row, column)
+        self.rect = self.image.get_rect()
+        self.rect = self.pos
+        self.screen.blit(self.image, self.rect)
+
+
+
+# 棋盘类
+class Chessboard:
+
+    # 初始化棋盘
+    def __init__(self, BoardData, UNIT=35, width=50):
+        self.ROW = BoardData.row
+        self.COLUMN = BoardData.column
+        Chessboard.UNIT = UNIT
+        Chessboard.width = width
 
     # 绘制棋盘, 传入当前棋盘，窗口，边框宽度
     def drawmap(self, screen, width):
+
         # 行
-        for row in range(self.SIZE):
+        for row in range(self.COLUMN):
             pygame.draw.line(screen, Color.RED.value,
                              (width, width + row * self.UNIT),
-                             (width + self.UNIT * (self.SIZE - 1),
+                             (width + self.UNIT * (self.ROW - 1),
                               width + row * self.UNIT))
         # 列
-        for column in range(self.SIZE):
+        for column in range(self.ROW):
             pygame.draw.line(screen, Color.RED.value,
                              (width + column * self.UNIT, width),
                              (width + column * self.UNIT,
-                              width + self.UNIT * (self.SIZE - 1)))
-#主程序
-#初始化界面
-from Chessboard.chessboard import Chessboard
+                              width + self.UNIT * (self.COLUMN - 1)))
+
+    @staticmethod
+    def convertArrayToPos(row, column):
+        return Chessboard.width + (row - 1) * Chessboard.UNIT, Chessboard.width + (column - 1) * Chessboard.UNIT
+
+    @staticmethod
+    def convertPosToArray(x, y):
+        return (x - Chessboard.width // 2) // Chessboard.UNIT, (y - Chessboard.width // 2) // Chessboard.UNIT
 
 
+# 主程序
+# 初始化界面
+
+
+boardData =BoardData(10, 20)
+screen=1
 def init_game():
     # 设置边框宽度
     BOARD_WIDTH = 50
     # 创建棋盘
-    chessboard = Chessboard(10, 35)
+    boardData = BoardData(10, 20)
+    chessBoard = Chessboard(boardData)
     pygame.init()
+
+    SIZE = (2 * BOARD_WIDTH + chessBoard.UNIT * (chessBoard.ROW - 1),
+            2 * BOARD_WIDTH + chessBoard.UNIT * (chessBoard.COLUMN - 1))
     # 创建窗口
-    screen = pygame.display.set_mode((2*BOARD_WIDTH+chessboard.UNIT*(chessboard.SIZE - 1),
-                                      2*BOARD_WIDTH+chessboard.UNIT*(chessboard.SIZE - 1)))
-    #设置窗口标题
+    global screen
+    screen = pygame.display.set_mode(SIZE)
+    # 设置窗口标题
     pygame.display.set_caption("我的五子棋AI果然有问题")
-    #设置背景
-    background = pygame.image.load('bg.jpg')
-    screen.blit(background,(-100,-100))
+    # 设置背景
+    background = pygame.image.load('Images/bg.jpg')
+    background = pygame.transform.scale(background, SIZE)
+
+    screen.blit(background, (0, 0))
     # #绘制棋盘
-    Chessboard.drawmap(chessboard,screen,BOARD_WIDTH)
-#控制游戏进程
+    # Chessboard.drawmap(screen,BOARD_WIDTH)
+    chessBoard.drawmap(screen, 50)
+
+
+# To solve mouse click event
+def checkEvent(event):
+    if (event.type == MOUSEBUTTONDOWN):
+        #print(event.pos)
+        #print(Chessboard.convertPosToArray(event.pos[0],event.pos[1]))
+        row,column = Chessboard.convertPosToArray(event.pos[0], event.pos[1])
+        putChessOnBoard(row,column)
+    pass
+
+
+def putChessOnBoard(row, column):
+    chessNew=chess(screen,Color.WHITE if boardData.thisTurn else Color.BLACK,row,column)
+    isWin = boardData.putChess(row,column)
+    print(isWin)
+    return isWin
+
+# 控制游戏进程
 if __name__ == '__main__':
     init_game()
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
+            else:
+                checkEvent(event)
         pygame.display.update()
